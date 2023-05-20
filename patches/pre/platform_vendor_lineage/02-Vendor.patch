@@ -1,0 +1,133 @@
+From 0bc4f45db4980b4022c56981b181fc177c2745c0 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Fri, 24 Mar 2023 23:47:10 +0000
+Subject: [PATCH] Vendur
+
+---
+ build/envsetup.sh | 17 +++++++++++++++++
+ config/common.mk  | 20 ++++++--------------
+ config/phh_gsi.mk | 26 ++++++++++++++++++++++++++
+ 3 files changed, 49 insertions(+), 14 deletions(-)
+ create mode 100644 config/phh_gsi.mk
+
+diff --git a/build/envsetup.sh b/build/envsetup.sh
+index 229ed309..7f2008d9 100644
+--- a/build/envsetup.sh
++++ b/build/envsetup.sh
+@@ -957,3 +957,20 @@ export SKIP_ABI_CHECKS=true
+ # Override host metadata to make builds more reproducible and avoid leaking info
+ export BUILD_USERNAME=nobody
+ export BUILD_HOSTNAME=android-build
++
++# Check and set ccache path on envsetup
++if [ -z ${CCACHE_EXEC} ]; then
++	ccache_path=$(which ccache)
++	if [ ! -z "$ccache_path" ]; then
++		mkdir /mnt/ccache
++		mount --bind ~/.ccache /mnt/ccache
++		export USE_CCACHE=1
++		export CCACHE_COMPRESS=1
++		export CCACHE_EXEC=/usr/bin/ccache
++		export CCACHE_DIR=/mnt/ccache
++		ccache -M 50G -F 0
++		echo "ccache found and CCACHE_EXEC has been set to : $ccache_path"
++	else
++		echo "ccache not found/installed!"
++	fi
++fi
+diff --git a/config/common.mk b/config/common.mk
+index 1330c5dc..690a8b3d 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -6,6 +6,9 @@ $(call inherit-product-if-exists, external/faceunlock/config.mk)
+ 
+ PRODUCT_BRAND ?= crDroidAndroid
+ 
++# PHH GSI
++$(call inherit-product, vendor/lineage/config/phh_gsi.mk)
++
+ PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
+ 
+ ifeq ($(PRODUCT_GMS_CLIENTID_BASE),)
+@@ -16,14 +19,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+     ro.com.google.clientidbase=$(PRODUCT_GMS_CLIENTID_BASE)
+ endif
+ 
+-ifneq ($(TARGET_BUILD_VARIANT),user)
+-# Disable ADB authentication
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += ro.adb.secure=0
+-else
+-# Enable ADB authentication
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += ro.adb.secure=1
+-endif
+-
+ ifneq ($(TARGET_BUILD_VARIANT),eng)
+ # Disable extra StrictMode features on all non-engineering builds
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.strictmode.disable=true
+@@ -96,7 +91,7 @@ PRODUCT_COPY_FILES += \
+ 
+ # Enforce privapp-permissions whitelist
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+-    ro.control_privapp_permissions=enforce
++    ro.control_privapp_permissions=log
+ 
+ ifneq ($(TARGET_DISABLE_LINEAGE_SDK), true)
+ # Lineage SDK
+@@ -115,8 +110,8 @@ PRODUCT_MINIMIZE_JAVA_DEBUG_INFO := true
+ PRODUCT_RESTRICT_VENDOR_FILES := false
+ 
+ # Bootanimation
+-TARGET_SCREEN_WIDTH ?= 1080
+-TARGET_SCREEN_HEIGHT ?= 1920
++TARGET_SCREEN_WIDTH ?= 720
++TARGET_SCREEN_HEIGHT ?= 1080
+ PRODUCT_PACKAGES += \
+     bootanimation.zip
+ 
+@@ -228,11 +223,8 @@ include vendor/lineage/config/version.mk
+ 
+ -include vendor/lineage-priv/keys/keys.mk
+ 
+-# Quick Tap
+-ifeq ($(TARGET_SUPPORTS_QUICK_TAP),true)
+ PRODUCT_COPY_FILES += \
+     vendor/lineage/prebuilt/common/etc/sysconfig/quick_tap.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/sysconfig/quick_tap.xml
+-endif
+ 
+ -include $(WORKSPACE)/build_env/image-auto-bits.mk
+ -include vendor/lineage/config/partner_gms.mk
+diff --git a/config/phh_gsi.mk b/config/phh_gsi.mk
+new file mode 100644
+index 00000000..4581d4f5
+--- /dev/null
++++ b/config/phh_gsi.mk
+@@ -0,0 +1,26 @@
++# The Gapps
++$(call inherit-product, vendor/gapps_go/config.mk)
++
++LINEAGE_BUILD := Treble
++
++# Own Gapps Flags
++WITH_FULL_THEGAPPS := false
++
++# Don't Build Kernel
++TARGET_NO_KERNEL := true
++
++# Shared Block (RO)
++PHH-SECURE_BUILD := false
++BOARD_EXT4_SHARE_DUP_BLOCKS := false
++
++# Use CCache
++USE_CCACHE := true
++
++# Build APN
++PRODUCT_PACKAGES += apns-conf.xml
++
++PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
++	persist.sys.binary_xml=false \
++	dalvik.vm.dex2oat64.enabled=true \
++	persist.sys.phh.dynamic_superuser=0 \
++	persist.sys.dexpreopt.performed=0 \
+-- 
+2.34.1
+

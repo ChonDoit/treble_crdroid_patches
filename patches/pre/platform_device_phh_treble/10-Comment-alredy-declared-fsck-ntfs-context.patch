@@ -1,0 +1,25 @@
+From 40bc6ddfa8dabbcd6d9a3d55f7081a84c451e631 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Mon, 17 Apr 2023 02:11:25 +0000
+Subject: [PATCH] Comment alredy declared fsck.ntfs context
+
+---
+ sepolicy/file_contexts | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sepolicy/file_contexts b/sepolicy/file_contexts
+index 1190020..f1bb49d 100644
+--- a/sepolicy/file_contexts
++++ b/sepolicy/file_contexts
+@@ -9,7 +9,7 @@
+ /system/bin/xiaomi-touch u:object_r:phhsu_exec:s0
+ 
+ #/system/bin/fsck\.exfat                 u:object_r:fsck_exec:s0
+-/system/bin/fsck\.ntfs                  u:object_r:fsck_exec:s0
++#/system/bin/fsck\.ntfs                  u:object_r:fsck_exec:s0
+ 
+ /bt_firmware(/.*)?      u:object_r:bt_firmware_file:s0
+ 
+-- 
+2.34.1
+

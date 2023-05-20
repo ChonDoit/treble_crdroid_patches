@@ -1,0 +1,299 @@
+From 505ef95eaef5d0480714cb06a50952f65e5f9ce6 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Thu, 6 Apr 2023 22:24:36 -0300
+Subject: [PATCH] Merge PHH-FOD
+
+---
+ libs/gui/BLASTBufferQueue.cpp                 | 18 ++++++++-
+ libs/ui/Gralloc2.cpp                          |  2 +-
+ libs/ui/Gralloc3.cpp                          |  2 +-
+ libs/ui/Gralloc4.cpp                          |  2 +-
+ services/surfaceflinger/BufferQueueLayer.cpp  | 19 +++++++++-
+ .../CompositionEngine/src/OutputLayer.cpp     | 38 +++++++++++++++++++
+ .../DisplayHardware/ComposerHal.cpp           |  7 ++++
+ .../DisplayHardware/ComposerHal.h             |  5 +++
+ .../surfaceflinger/DisplayHardware/HWC2.cpp   | 10 +++++
+ .../surfaceflinger/DisplayHardware/HWC2.h     |  4 ++
+ 10 files changed, 101 insertions(+), 6 deletions(-)
+
+diff --git a/libs/gui/BLASTBufferQueue.cpp b/libs/gui/BLASTBufferQueue.cpp
+index f034642681..33a6a9ca65 100644
+--- a/libs/gui/BLASTBufferQueue.cpp
++++ b/libs/gui/BLASTBufferQueue.cpp
+@@ -32,9 +32,18 @@
+ #include <utils/Trace.h>
+ 
+ #include <private/gui/ComposerService.h>
++#include <cutils/properties.h>
+ 
+ #include <chrono>
+ 
++static bool sCheckedProps = false;
++static bool sSamsungFod = false;
++static void init_fod_props() {
++    if(sCheckedProps) return;
++    sCheckedProps = true;
++    sSamsungFod = property_get_bool("persist.sys.phh.fod.samsung", false);
++}
++
+ using namespace std::chrono_literals;
+ 
+ namespace {
+@@ -140,9 +149,14 @@ BLASTBufferQueue::BLASTBufferQueue(const std::string& name)
+ 
+     // safe default, most producers are expected to override this
+     mProducer->setMaxDequeuedBufferCount(2);
++    uint64_t usage = GraphicBuffer::USAGE_HW_COMPOSER |
++        GraphicBuffer::USAGE_HW_TEXTURE;
++    init_fod_props();
++    if (sSamsungFod && name.find("SurfaceView[UdfpsController]") != std::string::npos) {
++	    usage |= 0x400000000LL;
++    }
+     mBufferItemConsumer = new BLASTBufferItemConsumer(mConsumer,
+-                                                      GraphicBuffer::USAGE_HW_COMPOSER |
+-                                                              GraphicBuffer::USAGE_HW_TEXTURE,
++                                                      usage,
+                                                       1, false, this);
+     static int32_t id = 0;
+     mName = name + "#" + std::to_string(id);
+diff --git a/libs/ui/Gralloc2.cpp b/libs/ui/Gralloc2.cpp
+index 224caf7216..272be3b3e4 100644
+--- a/libs/ui/Gralloc2.cpp
++++ b/libs/ui/Gralloc2.cpp
+@@ -115,7 +115,7 @@ status_t Gralloc2Mapper::validateBufferDescriptorInfo(
+     if (descriptorInfo->usage & ~validUsageBits) {
+         ALOGE("buffer descriptor contains invalid usage bits 0x%" PRIx64,
+               descriptorInfo->usage & ~validUsageBits);
+-        return BAD_VALUE;
++        return NO_ERROR;
+     }
+     return NO_ERROR;
+ }
+diff --git a/libs/ui/Gralloc3.cpp b/libs/ui/Gralloc3.cpp
+index 4a8a4d09d3..4b1c974db1 100644
+--- a/libs/ui/Gralloc3.cpp
++++ b/libs/ui/Gralloc3.cpp
+@@ -106,7 +106,7 @@ status_t Gralloc3Mapper::validateBufferDescriptorInfo(
+     if (descriptorInfo->usage & ~validUsageBits) {
+         ALOGE("buffer descriptor contains invalid usage bits 0x%" PRIx64,
+               descriptorInfo->usage & ~validUsageBits);
+-        return BAD_VALUE;
++        return NO_ERROR;
+     }
+     return NO_ERROR;
+ }
+diff --git a/libs/ui/Gralloc4.cpp b/libs/ui/Gralloc4.cpp
+index 499bc2c734..70ac43ac2c 100644
+--- a/libs/ui/Gralloc4.cpp
++++ b/libs/ui/Gralloc4.cpp
+@@ -116,7 +116,7 @@ status_t Gralloc4Mapper::validateBufferDescriptorInfo(
+     if (descriptorInfo->usage & ~validUsageBits) {
+         ALOGE("buffer descriptor contains invalid usage bits 0x%" PRIx64,
+               descriptorInfo->usage & ~validUsageBits);
+-        return BAD_VALUE;
++        return NO_ERROR;
+     }
+     return NO_ERROR;
+ }
+diff --git a/services/surfaceflinger/BufferQueueLayer.cpp b/services/surfaceflinger/BufferQueueLayer.cpp
+index 8c404aca3a..339dc5aab3 100644
+--- a/services/surfaceflinger/BufferQueueLayer.cpp
++++ b/services/surfaceflinger/BufferQueueLayer.cpp
+@@ -28,6 +28,7 @@
+ #include <compositionengine/UdfpsExtension.h>
+ #include <gui/BufferQueueConsumer.h>
+ #include <system/window.h>
++#include <cutils/properties.h>
+ 
+ #include "LayerRejecter.h"
+ #include "SurfaceInterceptor.h"
+@@ -36,6 +37,14 @@
+ #include "Scheduler/LayerHistory.h"
+ #include "TimeStats/TimeStats.h"
+ 
++static bool sCheckedProps = false;
++static bool sSamsungFod = false;
++static void init_fod_props() {
++    if (sCheckedProps) return;
++    sCheckedProps = true;
++    sSamsungFod = property_get_bool("persist.sys.phh.fod.samsung", false);
++}
++
+ namespace android {
+ using PresentState = frametimeline::SurfaceFrame::PresentState;
+ 
+@@ -506,6 +515,7 @@ void BufferQueueLayer::onFirstRef() {
+     mConsumer =
+             mFlinger->getFactory().createBufferLayerConsumer(consumer, mFlinger->getRenderEngine(),
+                                                              mTextureName, this);
++    init_fod_props();
+     mConsumer->setConsumerUsageBits(getEffectiveUsage(0));
+ 
+     mContentsChangedListener = new ContentsChangedListener(this);
+@@ -529,9 +539,16 @@ status_t BufferQueueLayer::setDefaultBufferProperties(uint32_t w, uint32_t h, Pi
+     } else if (mName == UDFPS_TOUCHED_LAYER_NAME) {
+         usageBits = getUdfpsUsageBits(usageBits, true);
+     }
+-
++
++    init_fod_props();
++
+     setDefaultBufferSize(w, h);
+     mConsumer->setDefaultBufferFormat(format);
++    uint64_t usageBits = getEffectiveUsage(0);
++    if (sSamsungFod && strstr(mName.c_str(), "Fingerprint on display.touched") != nullptr) {
++        ALOGE("Found on touched layer!");
++        usageBits |= 0x400000000LL;
++    }
+     mConsumer->setConsumerUsageBits(usageBits);
+ 
+     return NO_ERROR;
+diff --git a/services/surfaceflinger/CompositionEngine/src/OutputLayer.cpp b/services/surfaceflinger/CompositionEngine/src/OutputLayer.cpp
+index 87be750569..5ba0ed46c8 100644
+--- a/services/surfaceflinger/CompositionEngine/src/OutputLayer.cpp
++++ b/services/surfaceflinger/CompositionEngine/src/OutputLayer.cpp
+@@ -25,11 +25,16 @@
+ #include <compositionengine/impl/OutputLayer.h>
+ #include <compositionengine/impl/OutputLayerCompositionState.h>
+ #include <cstdint>
++#include <cutils/properties.h>
+ 
+ // TODO(b/129481165): remove the #pragma below and fix conversion issues
+ #pragma clang diagnostic push
+ #pragma clang diagnostic ignored "-Wconversion"
+ 
++static bool sCheckedProps = false;
++static bool sBBKFod = false;
++static bool sXiaomiFod = false;
++
+ #include "DisplayHardware/HWComposer.h"
+ 
+ // TODO(b/129481165): remove the #pragma below and fix conversion issues
+@@ -405,7 +410,40 @@ void OutputLayer::writeOutputDependentGeometryStateToHWC(HWC2::Layer* hwcLayer,
+               getLayerFE().getDebugName(), sourceCrop.left, sourceCrop.top, sourceCrop.right,
+               sourceCrop.bottom, to_string(error).c_str(), static_cast<int32_t>(error));
+     }
++
++    if (!sCheckedProps) {
++        sCheckedProps = true;
++        sBBKFod = property_get_bool("persist.sys.phh.fod.bbk", false);
++        sXiaomiFod = property_get_bool("persist.sys.phh.fod.xiaomi", false);
++        sAsusFod = property_get_bool("persist.sys.phh.fod.asus", false);
++    }
++
++#define UDFPS_BIOMETRIC_PROMPT_LAYER_NAME "BiometricPrompt#0"
++#define UDFPS_LAYER_NAME "UdfpsController#0"
++#define UDFPS_TOUCHED_LAYER_NAME "SurfaceView[UdfpsController](BLAST)#0"
+ 
++    if ((strcmp(getLayerFE().getDebugName(), UDFPS_LAYER_NAME) == 0)
++            || (strcmp(getLayerFE().getDebugName(), UDFPS_BIOMETRIC_PROMPT_LAYER_NAME) == 0)) {
++        ALOGE("Found fingerprint on display!");
++        if (sBBKFod) {
++            z = 0x41000031;
++        } else if (sXiaomiFod) {
++            z |= 0x1000000;
++        } else if (sAsusFod) {
++            hwcLayer->setLayerClass(5);
++        }
++    }
++
++    if (strcmp(getLayerFE().getDebugName(), UDFPS_TOUCHED_LAYER_NAME) == 0) {
++        ALOGE("Found fingerprint on display touched!");
++        if (sBBKFod) {
++            z = 0x41000033;
++        } else if (sXiaomiFod) {
++            z |= 0x2000000;
++        } else if (sAsusFod) {
++            hwcLayer->setLayerClass(4);
++        }
++    }
+ 
+     uint32_t z_udfps = z;
+     if ((strcmp(getLayerFE().getDebugName(), UDFPS_LAYER_NAME) == 0)
+diff --git a/services/surfaceflinger/DisplayHardware/ComposerHal.cpp b/services/surfaceflinger/DisplayHardware/ComposerHal.cpp
+index 09734c275f..19f22f453b 100644
+--- a/services/surfaceflinger/DisplayHardware/ComposerHal.cpp
++++ b/services/surfaceflinger/DisplayHardware/ComposerHal.cpp
+@@ -1220,6 +1220,13 @@ V2_4::Error Composer::setLayerGenericMetadata(Display display, Layer layer, cons
+     return Error::NONE;
+ }
+ 
++Error Composer::setLayerClass(Display display, Layer layer, uint32_t layerClass) {
++    mWriter.selectDisplay(display);
++    mWriter.selectLayer(layer);
++    mWriter.vendor800_1(layerClass);
++    return Error::NONE;
++}
++
+ V2_4::Error Composer::getLayerGenericMetadataKeys(
+         std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys) {
+     using Error = V2_4::Error;
+diff --git a/services/surfaceflinger/DisplayHardware/ComposerHal.h b/services/surfaceflinger/DisplayHardware/ComposerHal.h
+index fe114b9512..bbbe7a2ff7 100644
+--- a/services/surfaceflinger/DisplayHardware/ComposerHal.h
++++ b/services/surfaceflinger/DisplayHardware/ComposerHal.h
+@@ -231,6 +231,8 @@ public:
+             std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys) = 0;
+     virtual Error getClientTargetProperty(
+             Display display, IComposerClient::ClientTargetProperty* outClientTargetProperty) = 0;
++    // Asus proprietary
++    virtual Error setLayerClass(Display display, Layer layer, uint32_t layerClass);
+ };
+ 
+ namespace impl {
+@@ -471,6 +473,9 @@ public:
+             Display display,
+             IComposerClient::ClientTargetProperty* outClientTargetProperty) override;
+ 
++    // Asus proprietary
++    Error setLayerClass(Display display, Layer layer, uint32_t layerClass);
++
+ private:
+     class CommandWriter : public CommandWriterBase {
+     public:
+diff --git a/services/surfaceflinger/DisplayHardware/HWC2.cpp b/services/surfaceflinger/DisplayHardware/HWC2.cpp
+index 27146ab79c..474c3eade5 100644
+--- a/services/surfaceflinger/DisplayHardware/HWC2.cpp
++++ b/services/surfaceflinger/DisplayHardware/HWC2.cpp
+@@ -872,6 +872,16 @@ Error Layer::setZOrder(uint32_t z)
+     return static_cast<Error>(intError);
+ }
+ 
++Error Layer::setLayerClass(uint32_t val)
++{
++    if (CC_UNLIKELY(!mDisplay)) {
++        return Error::BAD_DISPLAY;
++    }
++
++    auto intError = mComposer.setLayerClass(mDisplay->getId(), mId, val);
++    return static_cast<Error>(intError);
++}
++
+ // Composer HAL 2.3
+ Error Layer::setColorTransform(const android::mat4& matrix) {
+     if (CC_UNLIKELY(!mDisplay)) {
+diff --git a/services/surfaceflinger/DisplayHardware/HWC2.h b/services/surfaceflinger/DisplayHardware/HWC2.h
+index 871465d717..9d00b7e145 100644
+--- a/services/surfaceflinger/DisplayHardware/HWC2.h
++++ b/services/surfaceflinger/DisplayHardware/HWC2.h
+@@ -287,6 +287,8 @@ public:
+     // Composer HAL 2.4
+     [[clang::warn_unused_result]] virtual hal::Error setLayerGenericMetadata(
+             const std::string& name, bool mandatory, const std::vector<uint8_t>& value) = 0;
++
++    virtual hal::Error setLayerClass(uint32_t layerClass) = 0;
+ };
+ 
+ namespace impl {
+@@ -329,6 +331,8 @@ public:
+     // Composer HAL 2.4
+     hal::Error setLayerGenericMetadata(const std::string& name, bool mandatory,
+                                        const std::vector<uint8_t>& value) override;
++
++    hal::Error setLayerClass(uint32_t layerClass);
+ 
+ private:
+     // These are references to data owned by HWC2::Device, which will outlive
+-- 
+2.40.0
+

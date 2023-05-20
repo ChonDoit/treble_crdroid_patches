@@ -1,0 +1,37 @@
+From 964c922e69dd0e4025a3f2f384ba7791c0293136 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Mon, 17 Apr 2023 02:09:57 +0000
+Subject: [PATCH] Fixup! FOD
+
+---
+ services/surfaceflinger/BufferQueueLayer.cpp                  | 1 -
+ services/surfaceflinger/CompositionEngine/src/OutputLayer.cpp | 1 +
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/BufferQueueLayer.cpp b/services/surfaceflinger/BufferQueueLayer.cpp
+index 696b36ddac..ed0fa23e04 100644
+--- a/services/surfaceflinger/BufferQueueLayer.cpp
++++ b/services/surfaceflinger/BufferQueueLayer.cpp
+@@ -544,7 +544,6 @@ status_t BufferQueueLayer::setDefaultBufferProperties(uint32_t w, uint32_t h, Pi
+ 
+     setDefaultBufferSize(w, h);
+     mConsumer->setDefaultBufferFormat(format);
+-    uint64_t usageBits = getEffectiveUsage(0);
+     if (sSamsungFod && strstr(mName.c_str(), "Fingerprint on display.touched") != nullptr) {
+         ALOGE("Found on touched layer!");
+         usageBits |= 0x400000000LL;
+diff --git a/services/surfaceflinger/CompositionEngine/src/OutputLayer.cpp b/services/surfaceflinger/CompositionEngine/src/OutputLayer.cpp
+index f2b4d3dbc2..82611d461e 100644
+--- a/services/surfaceflinger/CompositionEngine/src/OutputLayer.cpp
++++ b/services/surfaceflinger/CompositionEngine/src/OutputLayer.cpp
+@@ -34,6 +34,7 @@
+ static bool sCheckedProps = false;
+ static bool sBBKFod = false;
+ static bool sXiaomiFod = false;
++static bool sAsusFod = false;
+ 
+ #include "DisplayHardware/HWComposer.h"
+ 
+-- 
+2.34.1
+
