@@ -1,5 +1,5 @@
 # treble_crdroid_patches
-Base patches for build CrDroid A13 as PHH-Treble GSI
+Base patches for build CrDroid A12L as PHH-Treble GSI
 
 ## Credits
 These people have helped this project in some way or another, so they should be the ones who receive all the credit:
