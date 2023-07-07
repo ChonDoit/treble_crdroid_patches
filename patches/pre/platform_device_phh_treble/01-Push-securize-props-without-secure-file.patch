@@ -1,17 +1,18 @@
-From 89bae248aa7b6964c13172fd3106f3f447e2af18 Mon Sep 17 00:00:00 2001
+From dade4f8221c58cdb971f8f9a9e3600772f6eb45d Mon Sep 17 00:00:00 2001
 From: ChonDoit <thphantomblog@gmail.com>
-Date: Tue, 12 Jul 2022 01:34:25 +0000
-Subject: [PATCH] Adapt Securize due PixelPropUtils
+Date: Mon, 19 Jun 2023 22:22:56 +0000
+Subject: [PATCH] Push Securize props without secure file
 
+Don't push adb and debuggable ones, are unnecessary
 ---
- rw-system.sh | 122 ++++++++++++++++++++++++++-------------------------
- 1 file changed, 63 insertions(+), 59 deletions(-)
+ rw-system.sh | 121 +++++++++++++++++++++++++++------------------------
+ 1 file changed, 63 insertions(+), 58 deletions(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index 3a17730..5fb3677 100644
+index 5dc493f..5df7d3b 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -724,66 +724,70 @@ copyprop() {
+@@ -739,65 +739,70 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
  }
@@ -58,7 +59,6 @@ index 3a17730..5fb3677 100644
 -    resetprop_phh ro.build.selinux 0
 -
 -    resetprop_phh ro.adb.secure 1
--    setprop ctl.restart adbd
 -
 -    # Hide system/xbin/su
 -    mount /mnt/phh/empty_dir /system/xbin
@@ -68,11 +68,11 @@ index 3a17730..5fb3677 100644
 -    mkdir /mnt/phh/xbin
 -    chmod 0755 /mnt/phh/xbin
 -    chcon u:object_r:system_file:s0 /mnt/phh/xbin
--
+ 
 -    #phh-su will bind over this empty file to make a real su
 -    touch /mnt/phh/xbin/su
 -    chcon u:object_r:system_file:s0 /mnt/phh/xbin/su
- 
+-
 -    mount -o bind /mnt/phh/xbin /system/xbin
 -fi
 +# API 27
@@ -142,5 +142,5 @@ index 3a17730..5fb3677 100644
  for abi in "" 64;do
      f=/vendor/lib$abi/libstagefright_foundation.so
 -- 
-2.17.1
+2.34.1
 

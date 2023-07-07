@@ -1,0 +1,20 @@
+From 64b3e70b579600da6278fb58b8ead388cec8eb99 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Wed, 22 Feb 2023 14:35:36 +0000
+Subject: [PATCH 2/2] Adress a denial
+
+---
+ sepolicy/system_server.te | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 sepolicy/system_server.te
+
+diff --git a/sepolicy/system_server.te b/sepolicy/system_server.te
+new file mode 100644
+index 0000000..457538d
+--- /dev/null
++++ b/sepolicy/system_server.te
+@@ -0,0 +1 @@
++allow system_server sysfs:file r_file_perms;
+-- 
+2.34.1
+

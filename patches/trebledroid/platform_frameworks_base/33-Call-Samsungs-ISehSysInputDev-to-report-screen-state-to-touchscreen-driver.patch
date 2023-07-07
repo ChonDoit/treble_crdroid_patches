@@ -7,23 +7,23 @@ Subject: [PATCH] Call Samsung's ISehSysInputDev to report screen state to
 This fixes touchscreen not waking up on Galaxy F23
 ---
  services/core/Android.bp                      |  1 +
- .../server/display/LocalDisplayAdapter.java   | 31 +++++++++++++++++++
- 2 files changed, 32 insertions(+)
+ .../server/display/LocalDisplayAdapter.java   | 34 +++++++++++++++++++
+ 2 files changed, 35 insertions(+)
 
 diff --git a/services/core/Android.bp b/services/core/Android.bp
-index 8781f902d4ea..ecd3c18014f1 100644
+index a29865214e6d..96f9399125c8 100644
 --- a/services/core/Android.bp
 +++ b/services/core/Android.bp
-@@ -176,6 +176,7 @@ java_library_static {
-         "SurfaceFlingerProperties",
+@@ -178,6 +178,7 @@ java_library_static {
+         "overlayable_policy_aidl-java",
          "com.android.sysprop.watchdog",
          "faceunlock_framework",
-+        "vendor.samsung.hardware.sysinput-V1.2-java",
-     ],
-     javac_shard_size: 50,
- }
++	"vendor.samsung.hardware.sysinput-V1.2-java",
+         "kotlin-stdlib",
+         "kotlinx_coroutines_android",
+         "kotlinx_coroutines",
 diff --git a/services/core/java/com/android/server/display/LocalDisplayAdapter.java b/services/core/java/com/android/server/display/LocalDisplayAdapter.java
-index 2a219289cf10..29f653f0edd4 100644
+index 58a182a61e44..a4276a1d36f6 100644
 --- a/services/core/java/com/android/server/display/LocalDisplayAdapter.java
 +++ b/services/core/java/com/android/server/display/LocalDisplayAdapter.java
 @@ -33,6 +33,7 @@ import android.os.Trace;
@@ -43,31 +43,33 @@ index 2a219289cf10..29f653f0edd4 100644
  import java.io.PrintWriter;
  import java.util.ArrayList;
  import java.util.Arrays;
-@@ -226,6 +229,8 @@ final class LocalDisplayAdapter extends DisplayAdapter {
+@@ -228,6 +231,8 @@ final class LocalDisplayAdapter extends DisplayAdapter {
  
          private DisplayEventReceiver.FrameRateOverride[] mFrameRateOverrides =
                  new DisplayEventReceiver.FrameRateOverride[0];
-+        private boolean triedSamsungHal = false;
++	private boolean triedSamsungHal = false;
 +        private ISehSysInputDev samsungSysinput = null;
  
          LocalDisplayDevice(IBinder displayToken, long physicalDisplayId,
                  SurfaceControl.StaticDisplayInfo staticDisplayInfo,
-@@ -815,16 +820,42 @@ final class LocalDisplayAdapter extends DisplayAdapter {
+@@ -815,17 +820,46 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                              }
                              mSidekickActive = false;
                          }
-+                        if (!triedSamsungHal) {
++
++			if (!triedSamsungHal) {
 +                            triedSamsungHal = true;
 +                            try {
 +                                samsungSysinput = ISehSysInputDev.getService();
 +                            } catch(Throwable t) {}
 +                        }
++
                          final int mode = getPowerModeForState(state);
                          Trace.traceBegin(Trace.TRACE_TAG_POWER, "setDisplayState("
                                  + "id=" + physicalDisplayId
                                  + ", state=" + Display.stateToString(state) + ")");
 +
-+                        if (samsungSysinput != null) {
++			if (samsungSysinput != null) {
 +                            try {
 +                                Log.d("PHH", "setTspEnable 1, " + state + ", true");
 +                                samsungSysinput.setTspEnable(1, state, true);
@@ -83,7 +85,7 @@ index 2a219289cf10..29f653f0edd4 100644
                              Trace.traceEnd(Trace.TRACE_TAG_POWER);
                          }
 +
-+                        if (samsungSysinput != null) {
++			if (samsungSysinput != null) {
 +                            try {
 +                                Log.d("PHH", "setTspEnable 1, " + state + ", false");
 +                                samsungSysinput.setTspEnable(1, state, false);
@@ -91,6 +93,8 @@ index 2a219289cf10..29f653f0edd4 100644
 +                                Log.d("PHH", "Failed settings tsp enable", t);
 +                            }
 +                        }
++
+                         setCommittedState(state);
 +
                          // If we're entering a suspended (but not OFF) power state and we
                          // have a sidekick available, tell it now that it can take control.

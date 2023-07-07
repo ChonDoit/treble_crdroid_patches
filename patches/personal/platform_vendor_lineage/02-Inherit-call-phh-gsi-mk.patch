@@ -1,0 +1,60 @@
+From 5374b0f9b33b5d47ce7b6f06771ee70dffe5a14a Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Mon, 10 Oct 2022 05:10:11 +0000
+Subject: [PATCH] Inherit call phh_gsi.mk
+
+diff --git a/config/common.mk b/config/common.mk
+index 63586c98..51d8a2bf 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -4,6 +4,9 @@ $(call inherit-product-if-exists, vendor/lineage/config/crdroid.mk)
+ $(call inherit-product-if-exists, vendor/addons/config.mk)
+ $(call inherit-product-if-exists, external/faceunlock/config.mk)
+ 
++# PHH GSI
++$(call inherit-product, vendor/lineage/config/phh_gsi.mk)
++
+ PRODUCT_BRAND ?= crDroidAndroid
+ 
+ PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
+@@ -16,17 +19,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+     ro.com.google.clientidbase=$(PRODUCT_GMS_CLIENTID_BASE)
+ endif
+ 
+-ifeq ($(TARGET_BUILD_VARIANT),eng)
+-# Disable ADB authentication
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += ro.adb.secure=0
+-else
+-# Enable ADB authentication
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += ro.adb.secure=1
+-
+-# Disable extra StrictMode features on all non-engineering builds
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.strictmode.disable=true
+-endif
+-
+ # Backup Tool
+ PRODUCT_COPY_FILES += \
+     vendor/lineage/prebuilt/common/bin/backuptool.sh:install/bin/backuptool.sh \
+@@ -80,7 +72,7 @@ PRODUCT_COPY_FILES += \
+ 
+ # Enforce privapp-permissions whitelist
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+-    ro.control_privapp_permissions=enforce
++    ro.control_privapp_permissions=log
+ 
+ ifneq ($(TARGET_DISABLE_LINEAGE_SDK), true)
+ # Lineage SDK
+@@ -107,8 +99,8 @@ $(call enforce-product-packages-exist-internal,$(wildcard device/*/$(LINEAGE_BUI
+ endif
+ 
+ # Bootanimation
+-TARGET_SCREEN_WIDTH ?= 1080
+-TARGET_SCREEN_HEIGHT ?= 1920
++TARGET_SCREEN_WIDTH ?= 720
++TARGET_SCREEN_HEIGHT ?= 1080
+ PRODUCT_PACKAGES += \
+     bootanimation.zip
+ 
+-- 
+2.25.1
+

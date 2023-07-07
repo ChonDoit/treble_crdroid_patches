@@ -9,30 +9,30 @@ to make this
 ---
  packages/SystemUI/Android.bp                  |   1 +
  .../biometrics/UdfpsControllerOverlay.kt      |   3 +
- .../android/systemui/biometrics/UdfpsView.kt  | 137 ++++++++++
+ .../android/systemui/biometrics/UdfpsView.kt  | 149 ++++++++++
  services/core/Android.bp                      |   4 +
  .../server/biometrics/AuthService.java        | 238 +++++++++++++++++-
- 5 files changed, 381 insertions(+), 2 deletions(-)
+ 5 files changed, 393 insertions(+), 2 deletions(-)
 
 diff --git a/packages/SystemUI/Android.bp b/packages/SystemUI/Android.bp
-index 81cae9dc1c15..aaadc5d51d96 100644
+index a445a85563ef..8411fbb45d9c 100644
 --- a/packages/SystemUI/Android.bp
 +++ b/packages/SystemUI/Android.bp
-@@ -125,6 +125,7 @@ android_library {
-         "jsr330",
+@@ -177,6 +177,7 @@ android_library {
          "lottie",
          "LowLightDreamLib",
-+        "vendor.goodix.hardware.biometrics.fingerprint-V2.1-java",
+         "motion_tool_lib",
++	"vendor.goodix.hardware.biometrics.fingerprint-V2.1-java",
          "vendor.lineage.powershare-V1.0-java",
-         "colorkt",
-         "themelib",
+         "faceunlock_framework",
+     ],
 diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt
-index f4c3665a195c..c73597a83620 100644
+index 277cde1efd5e..8c5f1edc952b 100644
 --- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt
 +++ b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt
-@@ -162,6 +162,9 @@ class UdfpsControllerOverlay(
- 
+@@ -198,6 +198,9 @@ class UdfpsControllerOverlay @JvmOverloads constructor(
                      windowManager.addView(this, coreLayoutParams.updateDimensions(animation))
+                     sensorRect = sensorBounds
                      touchExplorationEnabled = accessibilityManager.isTouchExplorationEnabled
 +		    dimUpdate = {
 +                        windowManager.updateViewLayout(this, coreLayoutParams.updateDimensions(animation).apply { dimAmount = it })
@@ -41,42 +41,39 @@ index f4c3665a195c..c73597a83620 100644
                          if (accessibilityManager.isTouchExplorationEnabled) {
                              setOnHoverListener { v, event -> onTouch(v, event, true) }
 diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsView.kt b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsView.kt
-index 9dcd2db4d3b4..25d41a57a333 100644
+index 1e2e6c8bb253..b118248fe313 100644
 --- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsView.kt
 +++ b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsView.kt
-@@ -19,16 +19,25 @@ import android.content.Context
+@@ -19,16 +19,24 @@ import android.content.Context
  import android.graphics.Canvas
  import android.graphics.Color
  import android.graphics.Paint
 +import android.graphics.PixelFormat
  import android.graphics.PointF
+ import android.graphics.Rect
  import android.graphics.RectF
 +import android.os.FileObserver
  import android.util.AttributeSet
  import android.util.Log
  import android.view.MotionEvent
- import android.view.Surface
 +import android.view.SurfaceHolder
 +import android.view.SurfaceView
 +import android.view.ViewGroup
+ import android.view.Surface
  import android.widget.FrameLayout
  import com.android.systemui.R
  import com.android.systemui.doze.DozeReceiver
- 
 +import java.io.File
 +
 +import vendor.goodix.hardware.biometrics.fingerprint.V2_1.IGoodixFingerprintDaemon
-+
+ 
  private const val TAG = "UdfpsView"
  
- /**
-@@ -37,7 +46,56 @@ private const val TAG = "UdfpsView"
- class UdfpsView(
-     context: Context,
+@@ -40,6 +48,55 @@ class UdfpsView(
      attrs: AttributeSet?
-+
  ) : FrameLayout(context, attrs), DozeReceiver {
-+private var currentOnIlluminatedRunnable: Runnable? = null
+ 
++    private var currentOnIlluminatedRunnable: Runnable? = null
 +    private val mySurfaceView = SurfaceView(context)
 +    init {
 +        mySurfaceView.setVisibility(INVISIBLE)
@@ -124,10 +121,11 @@ index 9dcd2db4d3b4..25d41a57a333 100644
 +        mySurfaceView.holder.setFormat(PixelFormat.RGBA_8888)
 +
 +    }
++
+     // Use expanded overlay when feature flag is true, set by UdfpsViewController
+     var useExpandedOverlay: Boolean = false
  
-     // sensorRect may be bigger than the sensor. True sensor dimensions are defined in
-     // overlayParams.sensorBounds
-@@ -65,6 +123,8 @@ class UdfpsView(
+@@ -69,6 +126,8 @@ class UdfpsView(
      /** Parameters that affect the position and size of the overlay. */
      var overlayParams = UdfpsOverlayParams()
  
@@ -136,7 +134,7 @@ index 9dcd2db4d3b4..25d41a57a333 100644
      /** Debug message. */
      var debugMessage: String? = null
          set(value) {
-@@ -147,6 +207,21 @@ class UdfpsView(
+@@ -153,6 +212,21 @@ class UdfpsView(
              !(animationViewController?.shouldPauseAuth() ?: false)
      }
  
@@ -158,15 +156,27 @@ index 9dcd2db4d3b4..25d41a57a333 100644
      fun configureDisplay(onDisplayConfigured: Runnable) {
          isDisplayConfigured = true
          animationViewController?.onDisplayConfiguring()
-@@ -158,6 +233,25 @@ class UdfpsView(
+@@ -164,6 +238,37 @@ class UdfpsView(
          } else {
              doIlluminate(null /* surface */, onDisplayConfigured)
          }
-+        mySurfaceView.setVisibility(VISIBLE)
++
++	mySurfaceView.setVisibility(VISIBLE)
 +        Log.d("PHH", "setting surface visible!")
 +
-+        val brightness = File("/sys/class/backlight/panel0-backlight/brightness").readText().toDouble()
-+        val maxBrightness = File("/sys/class/backlight/panel0-backlight/max_brightness").readText().toDouble()
++        val brightnessFile = File("/sys/class/backlight/panel/brightness")
++        val maxBrightnessFile = File("/sys/class/backlight/panel/max_brightness")
++
++        var brightness: Double = 0.0
++        var maxBrightness: Double = 0.0
++
++        if (brightnessFile.exists() && maxBrightnessFile.exists()) {
++            brightness = brightnessFile.readText().toDouble()
++            maxBrightness = maxBrightnessFile.readText().toDouble()
++        } else {
++            brightness = File("/sys/class/backlight/panel0-backlight/brightness").readText().toDouble()
++            maxBrightness = File("/sys/class/backlight/panel0-backlight/max_brightness").readText().toDouble()
++        }
 +
 +        // Assume HBM is max brightness
 +        val dim = 1.0 - Math.pow( (brightness / maxBrightness), 1/2.3);
@@ -184,11 +194,12 @@ index 9dcd2db4d3b4..25d41a57a333 100644
      }
  
      private fun doIlluminate(surface: Surface?, onDisplayConfigured: Runnable?) {
-@@ -179,5 +273,48 @@ class UdfpsView(
+@@ -185,5 +290,49 @@ class UdfpsView(
              view.visibility = INVISIBLE
          }
          mUdfpsDisplayMode?.disable(null /* onDisabled */)
-+        if (hasAsusGhbm) {
++
++	if (hasAsusGhbm) {
 +            fodFileObserver = object: FileObserver(asusGhbmOnAchieved, FileObserver.MODIFY) {
 +                override fun onEvent(event: Int, path: String): Unit {
 +                    Log.d("PHH-Enroll", "Asus ghbm event")
@@ -234,20 +245,20 @@ index 9dcd2db4d3b4..25d41a57a333 100644
      }
  }
 diff --git a/services/core/Android.bp b/services/core/Android.bp
-index ecd3c18014f1..ad495ef7c5de 100644
+index 96f9399125c8..4bc6a8d749ae 100644
 --- a/services/core/Android.bp
 +++ b/services/core/Android.bp
-@@ -177,6 +177,10 @@ java_library_static {
+@@ -179,6 +179,10 @@ java_library_static {
          "com.android.sysprop.watchdog",
          "faceunlock_framework",
-         "vendor.samsung.hardware.sysinput-V1.2-java",
-+        "vendor.goodix.hardware.biometrics.fingerprint-V2.1-java",
+ 	"vendor.samsung.hardware.sysinput-V1.2-java",
++	"vendor.goodix.hardware.biometrics.fingerprint-V2.1-java",
 +        "vendor.samsung.hardware.biometrics.fingerprint-V3.0-java",
 +        "vendor.oplus.hardware.biometrics.fingerprint-V2.1-java",
 +        "vendor.oppo.hardware.biometrics.fingerprint-V2.1-java",
-     ],
-     javac_shard_size: 50,
- }
+         "kotlin-stdlib",
+         "kotlinx_coroutines_android",
+         "kotlinx_coroutines",
 diff --git a/services/core/java/com/android/server/biometrics/AuthService.java b/services/core/java/com/android/server/biometrics/AuthService.java
 index 7e6f35acc398..77d62a5309e8 100644
 --- a/services/core/java/com/android/server/biometrics/AuthService.java
