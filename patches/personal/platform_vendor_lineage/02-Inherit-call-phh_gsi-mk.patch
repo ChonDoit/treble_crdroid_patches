@@ -1,0 +1,41 @@
+From 4ffb86fa74ae3ede0b710da23b69f95626358a22 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Mon, 1 Apr 2024 21:09:35 -0300
+Subject: [PATCH] Inherit call phh_gsi.mk
+
+Change-Id: I1966ddfdba5bba3ccc310bc1307b4384f019ddc1
+---
+ config/common.mk | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index e7278ab9..2a9a63ab 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -4,6 +4,12 @@ $(call inherit-product-if-exists, vendor/lineage/config/crdroid.mk)
+ $(call inherit-product-if-exists, vendor/addons/config.mk)
+ $(call inherit-product-if-exists, external/faceunlock/config.mk)
+ 
++# PHH GSI
++$(call inherit-product, vendor/aosp/config/phh_gsi.mk)
++
++# Include common sepolicy
++$(call inherit-product, device/custom/sepolicy/common/sepolicy.mk)
++
+ PRODUCT_BRAND ?= crDroidAndroid
+ 
+ PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
+@@ -106,8 +112,8 @@ $(call enforce-product-packages-exist-internal,$(wildcard device/*/$(LINEAGE_BUI
+ endif
+ 
+ # Bootanimation
+-TARGET_SCREEN_WIDTH ?= 1080
+-TARGET_SCREEN_HEIGHT ?= 1920
++TARGET_SCREEN_WIDTH ?= 720
++TARGET_SCREEN_HEIGHT ?= 1280
+ PRODUCT_PACKAGES += \
+     bootanimation.zip
+ 
+-- 
+2.34.1
+

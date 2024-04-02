@@ -1,0 +1,30 @@
+From 7aab783e7f324cf05b1aad52f010475d4c92cbaf Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Mon, 1 Apr 2024 20:10:48 -0300
+Subject: [PATCH] Nuke duplicateda adb props
+
+---
+ config/common.mk | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 8c8919ee..e7278ab9 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -18,13 +18,10 @@ endif
+ 
+ ifeq ($(TARGET_BUILD_VARIANT),eng)
+ # Disable ADB authentication
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += ro.adb.secure=0
+ else
+ # Enable ADB authentication
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += ro.adb.secure=1
+ 
+ # Disable extra StrictMode features on all non-engineering builds
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.strictmode.disable=true
+ endif
+ 
+ # Backup Tool
+-- 
+2.34.1
+

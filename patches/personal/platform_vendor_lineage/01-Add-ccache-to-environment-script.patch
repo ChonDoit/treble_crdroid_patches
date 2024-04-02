@@ -1,13 +1,18 @@
-From fa210350fdb97fd06205f0d5d9bba8cd452bce2c Mon Sep 17 00:00:00 2001
+From 1a4bcb924c05a1b817c8ec456a9e3ebc0afbd158 Mon Sep 17 00:00:00 2001
 From: ChonDoit <thphantomblog@gmail.com>
-Date: Mon, 10 Oct 2022 05:08:58 +0000
+Date: Sun, 24 Mar 2024 11:12:33 -0300
 Subject: [PATCH] Add CCache Check to Environment Setup
 
+Change-Id: Ieb525d659e17b9aeb4674fcc2554a36481830d31
+---
+ build/envsetup.sh | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
 diff --git a/build/envsetup.sh b/build/envsetup.sh
-index c5fe1828..64668a52 100644
+index 1be3dd56..3896e9fc 100644
 --- a/build/envsetup.sh
 +++ b/build/envsetup.sh
-@@ -954,6 +954,23 @@ function fixup_common_out_dir() {
+@@ -960,6 +960,23 @@ function fixup_common_out_dir() {
      fi
  }
  
@@ -31,7 +36,6 @@ index c5fe1828..64668a52 100644
  export SKIP_ABI_CHECKS=true
  
  # Override host metadata to make builds more reproducible and avoid leaking info
-
 -- 
 2.34.1
 

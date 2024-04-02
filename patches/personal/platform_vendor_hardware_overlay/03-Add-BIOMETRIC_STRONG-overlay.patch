@@ -47,7 +47,7 @@ index 0000000..1d5131a
 +        android:isStatic="true"
 +        android:priority="0"
 +        android:targetPackage="android"
-+        android:requiredSystemPropertyName="persist.sys.phh.biometrics"
++        android:requiredSystemPropertyName="persist.sys.phh.biometricstrong"
 +        android:requiredSystemPropertyValue="true" />
 +</manifest>
 diff --git a/Misc/Biometrics/res/values/arrays.xml b/Misc/Biometrics/res/values/arrays.xml
@@ -63,10 +63,10 @@ index 0000000..e3c63f1
 +    </string-array>
 +</resources>
 diff --git a/overlay.mk b/overlay.mk
-index 3208568..da1edbb 100644
+index 2143d9c..abd4763 100644
 --- a/overlay.mk
 +++ b/overlay.mk
-@@ -84,6 +84,7 @@ PRODUCT_PACKAGES += \
+@@ -85,6 +85,7 @@ PRODUCT_PACKAGES += \
  	treble-overlay-meizu-m2181-systemui \
  	treble-overlay-misc-aod \
  	treble-overlay-misc-aod-systemui \

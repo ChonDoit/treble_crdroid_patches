@@ -1,0 +1,163 @@
+From ce81c18a0ec59c6e9f3d169f3a4cafd7f3fe96f9 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Tue, 2 Apr 2024 02:16:47 -0300
+Subject: [PATCH 1/2] Revert "fixup! libui: Allow extension of valid gralloc
+ 1.0 buffer usage bits"
+
+This reverts commit 627a733000f50a9f85f1b63aa3dc148645ed70d3.
+---
+ libs/ui/Gralloc2.cpp | 10 +++++-----
+ libs/ui/Gralloc3.cpp | 10 +++++-----
+ libs/ui/Gralloc4.cpp | 10 +++++-----
+ 3 files changed, 15 insertions(+), 15 deletions(-)
+
+diff --git a/libs/ui/Gralloc2.cpp b/libs/ui/Gralloc2.cpp
+index 8b4ebb3ba0..a358f78528 100644
+--- a/libs/ui/Gralloc2.cpp
++++ b/libs/ui/Gralloc2.cpp
+@@ -49,11 +49,11 @@ uint64_t getValid10UsageBits() {
+             bits = bits | bit;
+         }
+ 
+-        if (ADDNL_GRALLOC_10_USAGE_BITS) {
+-            uint64_t addnl_bits = static_cast<uint64_t>(ADDNL_GRALLOC_10_USAGE_BITS);
+-            ALOGI("Adding additional valid usage bits: 0x%" PRIx64, addnl_bits);
+-            bits = bits | addnl_bits;
+-        }
++#ifdef ADDNL_GRALLOC_10_USAGE_BITS
++        uint64_t addnl_bits = static_cast<uint64_t>(ADDNL_GRALLOC_10_USAGE_BITS);
++        ALOGI("Adding additional valid usage bits: 0x%" PRIx64, addnl_bits);
++        bits = bits | addnl_bits;
++#endif
+ 
+         return bits;
+     }();
+diff --git a/libs/ui/Gralloc3.cpp b/libs/ui/Gralloc3.cpp
+index 81fddafe05..661ecc62a2 100644
+--- a/libs/ui/Gralloc3.cpp
++++ b/libs/ui/Gralloc3.cpp
+@@ -48,11 +48,11 @@ uint64_t getValidUsageBits() {
+             bits = bits | bit;
+         }
+ 
+-        if (ADDNL_GRALLOC_10_USAGE_BITS) {
+-            uint64_t addnl_bits = static_cast<uint64_t>(ADDNL_GRALLOC_10_USAGE_BITS);
+-            ALOGI("Adding additional valid usage bits: 0x%" PRIx64, addnl_bits);
+-            bits = bits | addnl_bits;
+-        }
++#ifdef ADDNL_GRALLOC_10_USAGE_BITS
++        uint64_t addnl_bits = static_cast<uint64_t>(ADDNL_GRALLOC_10_USAGE_BITS);
++        ALOGI("Adding additional valid usage bits: 0x%" PRIx64, addnl_bits);
++        bits = bits | addnl_bits;
++#endif
+ 
+         return bits;
+     }();
+diff --git a/libs/ui/Gralloc4.cpp b/libs/ui/Gralloc4.cpp
+index fdb2bbdc45..45ae07cafc 100644
+--- a/libs/ui/Gralloc4.cpp
++++ b/libs/ui/Gralloc4.cpp
+@@ -76,11 +76,11 @@ uint64_t getValidUsageBits() {
+             bits = bits | bit;
+         }
+ 
+-        if (ADDNL_GRALLOC_10_USAGE_BITS) {
+-            uint64_t addnl_bits = static_cast<uint64_t>(ADDNL_GRALLOC_10_USAGE_BITS);
+-            ALOGI("Adding additional valid usage bits: 0x%" PRIx64, addnl_bits);
+-            bits = bits | addnl_bits;
+-        }
++#ifdef ADDNL_GRALLOC_10_USAGE_BITS
++        uint64_t addnl_bits = static_cast<uint64_t>(ADDNL_GRALLOC_10_USAGE_BITS);
++        ALOGI("Adding additional valid usage bits: 0x%" PRIx64, addnl_bits);
++        bits = bits | addnl_bits;
++#endif
+ 
+         return bits;
+     }();
+-- 
+2.34.1
+
+
+From 84f6e8d2eb0c5825479a8d47f3592d38534c5c37 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Tue, 2 Apr 2024 02:17:25 -0300
+Subject: [PATCH 2/2] Revert "libui: Allow extension of valid gralloc 1.0
+ buffer usage bits"
+
+This reverts commit dc5fbd422a10a2ba0f85c232e252390bbb061b5f.
+---
+ libs/ui/Android.bp   | 1 -
+ libs/ui/Gralloc2.cpp | 7 -------
+ libs/ui/Gralloc3.cpp | 7 -------
+ libs/ui/Gralloc4.cpp | 7 -------
+ 4 files changed, 22 deletions(-)
+
+diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
+index 41a7adcf8e..d138495036 100644
+--- a/libs/ui/Android.bp
++++ b/libs/ui/Android.bp
+@@ -158,7 +158,6 @@ cc_library_shared {
+ 
+     defaults: [
+         "libui-defaults",
+-        "gralloc_10_usage_bits_defaults",
+         // Uncomment the following line to enable VALIDATE_REGIONS traces
+         //defaults: ["libui-validate-regions-defaults"],
+     ],
+diff --git a/libs/ui/Gralloc2.cpp b/libs/ui/Gralloc2.cpp
+index a358f78528..947db244fb 100644
+--- a/libs/ui/Gralloc2.cpp
++++ b/libs/ui/Gralloc2.cpp
+@@ -48,13 +48,6 @@ uint64_t getValid10UsageBits() {
+         for (const auto bit : hardware::hidl_enum_range<BufferUsage>()) {
+             bits = bits | bit;
+         }
+-
+-#ifdef ADDNL_GRALLOC_10_USAGE_BITS
+-        uint64_t addnl_bits = static_cast<uint64_t>(ADDNL_GRALLOC_10_USAGE_BITS);
+-        ALOGI("Adding additional valid usage bits: 0x%" PRIx64, addnl_bits);
+-        bits = bits | addnl_bits;
+-#endif
+-
+         return bits;
+     }();
+     return valid10UsageBits;
+diff --git a/libs/ui/Gralloc3.cpp b/libs/ui/Gralloc3.cpp
+index 661ecc62a2..7be662552d 100644
+--- a/libs/ui/Gralloc3.cpp
++++ b/libs/ui/Gralloc3.cpp
+@@ -47,13 +47,6 @@ uint64_t getValidUsageBits() {
+              hardware::hidl_enum_range<hardware::graphics::common::V1_2::BufferUsage>()) {
+             bits = bits | bit;
+         }
+-
+-#ifdef ADDNL_GRALLOC_10_USAGE_BITS
+-        uint64_t addnl_bits = static_cast<uint64_t>(ADDNL_GRALLOC_10_USAGE_BITS);
+-        ALOGI("Adding additional valid usage bits: 0x%" PRIx64, addnl_bits);
+-        bits = bits | addnl_bits;
+-#endif
+-
+         return bits;
+     }();
+     return validUsageBits;
+diff --git a/libs/ui/Gralloc4.cpp b/libs/ui/Gralloc4.cpp
+index 45ae07cafc..54e7ba4927 100644
+--- a/libs/ui/Gralloc4.cpp
++++ b/libs/ui/Gralloc4.cpp
+@@ -75,13 +75,6 @@ uint64_t getValidUsageBits() {
+              hardware::hidl_enum_range<hardware::graphics::common::V1_2::BufferUsage>()) {
+             bits = bits | bit;
+         }
+-
+-#ifdef ADDNL_GRALLOC_10_USAGE_BITS
+-        uint64_t addnl_bits = static_cast<uint64_t>(ADDNL_GRALLOC_10_USAGE_BITS);
+-        ALOGI("Adding additional valid usage bits: 0x%" PRIx64, addnl_bits);
+-        bits = bits | addnl_bits;
+-#endif
+-
+         return bits;
+     }();
+     return validUsageBits | kRemovedUsageBits;
+-- 
+2.34.1
+

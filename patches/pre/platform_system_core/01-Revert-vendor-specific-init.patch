@@ -1,6 +1,6 @@
-From 235b8b34a8cfe7dc8b2fbe535b452bc59ab92a03 Mon Sep 17 00:00:00 2001
-From: ChonDoe <thphantomblog@gmail.com>
-Date: Mon, 13 Feb 2023 04:50:08 +0000
+From f34146552f8a6e100ec96cd1728435e4951558b4 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Mon, 1 Apr 2024 20:07:31 -0300
 Subject: [PATCH] Revert "init: Add vendor-specific initialization hooks."
 
 This reverts commit 74ba6b3782e68f820bcf2ca9db5241be36204896.
@@ -76,10 +76,10 @@ index 383d0f541..c5b1efa7a 100644
 -OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 -IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 diff --git a/init/property_service.cpp b/init/property_service.cpp
-index d706e5a2d..f22763621 100644
+index 1ca304e0c..faa7efb83 100644
 --- a/init/property_service.cpp
 +++ b/init/property_service.cpp
-@@ -73,7 +73,6 @@
+@@ -74,7 +74,6 @@
  #include "subcontext.h"
  #include "system/core/init/property_service.pb.h"
  #include "util.h"
@@ -87,7 +87,7 @@ index d706e5a2d..f22763621 100644
  
  using namespace std::literals;
  
-@@ -1138,9 +1137,6 @@ void PropertyLoadBootDefaults() {
+@@ -1170,9 +1169,6 @@ void PropertyLoadBootDefaults() {
      // Weaken property override security during execution of the vendor init extension
      weaken_prop_override_security = true;
  
