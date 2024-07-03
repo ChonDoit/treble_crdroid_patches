@@ -1,33 +1,48 @@
 {
-  "version": "v20240402",
-  "date": "1712035068",
+  "version": "v20240701",
+  "date": "1719979973",
   "gsi": "CrDroid | by ChonDoe feat. TD",
   "changelog": "https://raw.githubusercontent.com/ChonDoit/treble_crdroid_patches/13/changelog.txt",
   "variants": [
     {
+      "name": "Gapps",
+      "size": "1385276352",
+      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13-Signed/Crdroid_A13-arm64-bgS_20240701.img.xz"
+    },
+    {
+      "name": "Gapps-VNDK-Lite",
+      "size": "1329034840",
+      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13-Signed/Crdroid_A13-arm64-bgS-vndklite_20240701.img.xz"
+    },
+    {
+      "name": "Gapps-Secure",
+      "size": "1236349908",
+      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13-Signed/Crdroid_A13-RO-arm64-bgS_20240701.img.xz"
+    },
+    {
       "name": "Slim",
-      "size": "1157065192",
-      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13/CrDoid_A13-arm64-bgS-slim_20240402.img.xz"
+      "size": "1166838420",
+      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13-Signed/Crdroid_A13-arm64-bgS-slim_20240701.img.xz"
     },
     {
       "name": "Slim-VNDK-Lite",
-      "size": "1059309168",
-      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13/CrDoid_A13-arm64-bgS-slim-vndklite_20240402.img.xz"
+      "size": "1119380944",
+      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13-Signed/Crdroid_A13-arm64-bgS-slim-vndklite_20240701.img.xz"
     },
     {
       "name": "Slim-Secure",
-      "size": "1007810252",
-      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13/CrDoid_A13-RO-arm64-bgN-slim_20240402.img.xz"
+      "size": "1017193696",
+      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13/Crdroid_A13-RO-arm64-bgN-slim_20240701.img.xz"
     },
     {
       "name": "Vanilla",
-      "size": "1027966792",
-      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13/CrDoid_A13-arm64-bvS_20240402.img.xz"
+      "size": "1036551096",
+      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13/Crdroid_A13-arm64-bvS_20240701.img.xz"
     },
     {
       "name": "Vanilla-VNDK-Lite",
-      "size": "984566920",
-      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13/CrDoid_A13-arm64-bvS-vndklite_20240402.img.xz"
+      "size": "995078980",
+      "url": "https://github.com/ChonDoit/treble_crdroid_patches/releases/download/A13/Crdroid_A13-arm64-bvS-vndklite_20240701.img.xz"
     }
   ]
 }
